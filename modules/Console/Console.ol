@@ -69,14 +69,18 @@ RequestResponse:
 	unsubscribeSessionListener(UnsubscribeSessionListener)(void)
 }
 
-interface IConsoleInput {
-oneWay: in(InRequest)
+interface IReceiver {
+oneWay: in(InRequest) // oneWay becomes camelCased with initial lowercase letter, to be consistent with all the rest
 }
 
 foreign service Console /* (params:T) */ { // foreign services are implemented in other technologies, e.g., Java
 	// input ports in foreign services should not have location or protocol defined
 	inputPort IP {
 		interfaces: IConsole
+	}
+
+	outputPort Receiver { // Even java services might have dependencies, as in this case
+		interfaces: IReceiver
 	}
 
 	// Implementation is foreign, i.e., defined in another technology
