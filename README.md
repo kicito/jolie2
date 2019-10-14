@@ -16,7 +16,7 @@ Module system is not supported in the current version of Jolie. The current work
 
 ### Module structure
 
-Modules in Jolie are determined by directories. A directory name is  module is name Given following snippet
+Modules in Jolie are determined by directories. A directory name is also defined module's name. Given following snippet
 
 ``` jolie
 import IConsole from Console
@@ -24,9 +24,67 @@ import IConsole from Console
 
 The Interpreter is expected to do the following
 
-1. The module finder determine if it can find the named module using certain strategy it knows about, a lookup path .
+1. The module finder determine if it can find the directory named **Console** using certain strategy at several lookup path including build-in modules, user specified path.
+2. The source code of module's code and it's meta property [meta](#Meta) is store in the memory waiting to be evaluate at ```embbed``` identifier thus, the configuration of module can be defined dynamically by the embedder(EmbeddedServiceLoader??).
+
+As seen above the syntax on ```import``` identifier is following
+
+``` BNF
+ImportDeclaration ::= "import ExportedIdentifiers from ImportPath [as Identifier]"
+ExportedIdentifiers ::= Identifier | "," ExportedIdentifiers
+```
+
+- ExportedIdentifiers are any exported identifier in module.
+- Identifier is any valid identifier which will be used in qualified identifiers
+- ImportPath is string literal (raw or interpreted)
+
+### Meta
+
+Meta properties of modules is essential for developing the module system. as in 2017 TC39, the committee of ECMAScript presented the motivation on including ```import.meta```[1] to module script within browser. This variable contain per-module metadata inside the module. Supplement module's meta properties has been adopted by other major programing language such as ```__dirname``` in NodeJS, ```crate``` prefix in Rust, and ```__path__``` attribute in Python. This variable helps developers and the interpreter such as path resolving, detection of execution on top level(program unit) or not(a library)
+
+e.g.
+
+``` jolie
+    // modules/interfaces/AIface.ol
+    export type AMesg : void{
+        name: string
+    }
+    // modules/A.ol
+    import AMesg from interfaces // module importer performs lookup at directory path from meta property
+    import File // module importer performs lookup at build-in modules
+    main{
+        readFile@File( { .filename = meta.dirname + "some.json"} )( jsonResponse )
+      // rest of code is omitted
+    }
+
+```
+
+### Module's public identifier
+
+In order to achieve the encapsulation of namespace and present feeling of writing Jolie. Introducing an additional identifier to denote accessibility of the client module is necessary. A couple reasons are following
+
+1. It helps module's author restricts the modification on part of their modules.
+2. It helps module's user determines accessible parameters on module
+3. It helps IDE language extension produce meaningful sugguestion to the users
+
+note: Services's parameters  
+
+``` jolie
+   service Main ( params:MainParams ) {  }
+```  
+
+can be considered as a service constructor
 
 ### Questions and inputs
 
-- since "name of the service must be the same as the name of the enclosing file" then ```import Console [from Console]``` can be omitted
-- javascript separate reading input from console into other package [readline](https://nodejs.org/api/readline.html) 
+- since "name of the service must be the same as the name of the enclosing file" then ```import Console [from Console]``` can be omitted. What about [here](https://github.com/fmontesi/jolie2/blob/master/Main.ol#L11) in Main.ol
+- javascript separate reading input from console into other package [readline](https://nodejs.org/api/readline.html)
+- How to dealing with modules that using same port internally, There should be no problem if it is using ```local``` protocol. Introduce message queue? and Pub/Sub?  
+
+to ask: what is behavior of module comparing to current embed service
+
+## Reference
+1. [Python module system](https://docs.python.org/3/reference/import.html)
+2. [NodeJS module system](https://nodejs.org/api/modules.html)
+3. [Rust module system](https://doc.rust-lang.org/stable/edition-guide/rust-2018/module-system/index.html)
+4. [tc39 import meta proposal](https://github.com/tc39/proposal-import-meta)
