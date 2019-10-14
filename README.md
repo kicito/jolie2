@@ -46,7 +46,7 @@ e.g.
 
 ``` jolie
     // modules/interfaces/AIface.ol
-    export type AMesg : void{
+    export type AMesg : void{ // export as a Module's public identifier
         name: string
     }
     // modules/A.ol
@@ -65,7 +65,7 @@ In order to achieve the encapsulation of namespace and present feeling of writin
 
 1. It helps module's author restricts the modification on part of their modules.
 2. It helps module's user determines accessible parameters on module
-3. It helps IDE language extension produce meaningful sugguestion to the users
+3. It helps IDE language extension produce meaningful suggestions to the users
 
 note: Services's parameters  
 
@@ -79,9 +79,39 @@ can be considered as a service constructor
 
 - since "name of the service must be the same as the name of the enclosing file" then ```import Console [from Console]``` can be omitted. What about [here](https://github.com/fmontesi/jolie2/blob/master/Main.ol#L11) in Main.ol
 - javascript separate reading input from console into other package [readline](https://nodejs.org/api/readline.html)
-- How to dealing with modules that using same port internally, There should be no problem if it is using ```local``` protocol. Introduce message queue? and Pub/Sub?  
+- the behavior on importing same module multiple time, should it gets same instance? so this code works.
+  ``` jolie
+  // modules/A.ol
+  import Logger
+   service AService ( params:MainParams ) {  }
+  // main.ol
+  import Logger
+   service Main ( params:MainParams ) {  }
+  ```
 
-to ask: what is behavior of module comparing to current embed service
+  or use dependency injection? 
+  
+  ``` jolie
+  // modules/A.ol
+  import Logger
+   service AService ( params:MainParams ) {  }
+  // main.ol
+  import Logger
+   service Main ( params:MainParams ) { 
+        embed AService { 
+          params: {.log = Logger}
+    	}
+    }
+  ```
+
+- How to dealing with modules that using same port internally e.g.
+  ``` jolie
+
+  ```
+There should be no problem if it is using ```local``` protocol. Introduce message queue? and Pub/Sub?
+
+
+to ask: what is behavior of module comparing to current embed service, debuggin in vscode?
 
 ## Reference
 1. [Python module system](https://docs.python.org/3/reference/import.html)
