@@ -1,0 +1,1 @@
+since the definition of Ports are moved into service declaration. is it meaningful to have exporting ports?
