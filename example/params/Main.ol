@@ -4,6 +4,8 @@ service Main ( params:MainParams ) { // name of the service must be the same as 
     embed Rand ({.seed = 1}){
         bindIn: IP -> Rand
     }
-
-    nextInt@Rand()(randInt)
+    main{
+        nextInt@Rand()(randInt)
+        // log result
+    }
 }

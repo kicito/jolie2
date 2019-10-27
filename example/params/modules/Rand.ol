@@ -30,9 +30,11 @@ service Rand (params: RandParams){
 		interfaces: IRand
 	}
 
-    setSeed@RandJavaService(params.seed)
+    init{
+        setSeed@RandJavaService(params.seed)
+    }
 
-    for(true){
+    main{
         [nextInt(){
 
         }]

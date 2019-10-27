@@ -42,6 +42,7 @@ service SearchEngine (params){
     main {
         [search(req){
             search@SEOP({.q= .req.q})(res)
+            // socket://api.duckduckgo.com:443/search......
         }]{
             searchResult@ClientOP({.result = res})
         }

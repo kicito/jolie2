@@ -1,30 +1,27 @@
-import SearchEngine from SearchEngine
-import SEResultInterface,SEInterface from SearchEngine
-include "console.iol"
-
+import SEResultInterface, SEInterface from "SearchEngine"
+// importing Console is omitted
 
 service Main ( params:MainParams ) { 
-    embed SearchEngine{    }
+    embed SearchEngine{ }
 
 	outputPort ClientToSE {
-		Location: "local:/searchEngineInput"
+		Location: "local:/searchEngineInput" // lib author set static location.
 		Interfaces: SEInterface
 	}
 
 	inputPort SEToClient {
-		Location: "local:/searchEngineOutput"
+		Location: "local:/searchEngineOutput" // lib author set static location.
 		Interfaces: SEResultInterface
 	}
 
-    init{
-        search@SearchEngine({.query= "Jolie Programing Language"})
+    init {
+        search@ClientToSE({.query= "Jolie Programing Language"})
     }
 
 	main {
         [searchResult(res)]{
             println@Console( "# Found " + #res.result.Results.Result + " result(s)" )();
         }
-        
     }
 }
 

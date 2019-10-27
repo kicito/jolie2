@@ -1,67 +1,72 @@
 # Jolie2
 
-This repository contains proposals and discussion on features and specification for new major release of Jolie, Jolie2.
+This repository contains proposals and discussion on new major feature of Jolie, module system.
 
 ## TOC
 
-[Modular Development](#Modular-Development)
+[Current State of Jolie](#Current-State)
+[Module Structure](#Module-structure)
 
-## Modular Development
+## Current State
 
-This section contains description and specification of Module system in Jolie
+The current state of Jolie's programming language does not have module system. The current workaround adopting **separation of concern** in Jolie is either using ```include``` or explicitly declare an embedded service. The capability of using keyword ```include``` is limited, since behavior behind it is appending content of target file into host file, then combined source code from both files is parsed by Jolie. Secondly, using embedded service gives developer perspective of running an additional service on top of the embedder program which still has it's limitation on several aspects of code-reusability of certain identifier, such as types and variable. The support of module system will enhance Jolie's flexibility and decomposition of code and help developer build more complex programs by integrate smaller modules together.
 
-### Motivation
+## Module structure
 
-Module system is not supported in the current version of Jolie. The current workaround adopting **separation of concern** principal in Jolie is either using ```include``` or explicitly declare an embedded service. The capability of using keyword ```include``` is limited, since behavior behind it is appending content of target file into host file, then combined source code from both file are parsed by Jolie. Secondly, using embedded service gives developer perspective of running an additional service on top of the embedder program which still has it's limitation on several aspects of code-reusability such as declaration of inputPort's location. The support of module system will allow high-level decomposition of Jolie program into pieces and recompose each pieces into more complex program.
+This section will describe the structure of module system in Jolie starting with the current feature of Jolie, and specification of the new module system.
 
-### Module structure
+### import syntax
+
+``` BNF
+import_stmt ::= "import" import_clause from_clause
+
+import_clause ::= namespace_import | import_list
+
+namespace_import ::= * "as" import_binding
+
+import_list ::= import_specifier | import_list , import_specifier
+import_specifier ::= import_binding | identifier_name as import_binding
+
+import_binding ::= binding_identifier
+
+from_clause ::= "from" module_specifier
+
+module_specifier ::= string_literal
+```
+
+**Example**
+
+``` jolie
+  import Console from "console" (import-1)
+  import * as hs from "http_status" (import-2)
+  import dateType, timeType from "date"
+  import Rand from "rand"
+  import iden_A from "serviceA/main.ol"
+```
+
+* ```identifier_name``` = **exported** identifier found in ```module_specifier```.
+* ```binding_identifier``` = identifier name to be bind in local namespace.
+
+### import Behavior
+
+1. Jolie module loader resolves ```module_specifier``` which is either a build-in module (eg. console) or perform a path lookup in ```modules``` folder in root project directory, or user specific path.
+2. Jolie module loader parse content in imported file, result in executable code(olParser.parse()?) stored in a Map data structure associate with module name.
+3. Module's program is execute within its context(OOIT?).
+4. Evaluated result is bound into ```binding_identifier``` for local namespace of module client.
+
+**Note**:
+
+* In step (1) if the module loader unable to resolve ```module_specifier```, the ```ImportError``` is raised.
+* In step (2,3) if there is errors occurs during parsing, the parsing process is stop and returns the error.
+* In step (4) import statement from ```import_specifier``` binds exported module identifier into local namespace. If it is followed by "as" the ```import_binding``` is used as local name for the module see (import-1). For ```namespace_import``` all exported identifiers are bound into ```import_binding``` in local namespace (import-2)
 
 Modules in Jolie are determined by directories. A directory name is also defined module's name. Given following snippet
 
-``` jolie
-import IConsole from Console
-```
-
-The Interpreter is expected to do the following
-
-1. The module finder determine if it can find the directory named **Console** using certain strategy at several lookup path including build-in modules, user specified path.
-2. The source code of module's code and it's meta property [meta](#Meta) is store in the memory waiting to be evaluate at ```embbed``` identifier thus, the configuration of module can be defined dynamically by the embedder(EmbeddedServiceLoader??).
-
-As seen above the syntax on ```import``` identifier is following
-
-``` BNF
-ImportDeclaration ::= "import ExportedIdentifiers from ImportPath [as Identifier]"
-ExportedIdentifiers ::= Identifier | "," ExportedIdentifiers
-```
-
-- ExportedIdentifiers are any exported identifier in module.
-- Identifier is any valid identifier which will be used in qualified identifiers
-- ImportPath is string literal (raw or interpreted)
-
-### Meta
-
-Meta properties of modules is essential for developing the module system. as in 2017 TC39, the committee of ECMAScript presented the motivation on including ```import.meta```[1] to module script within browser. This variable contain per-module metadata inside the module. Supplement module's meta properties has been adopted by other major programing language such as ```__dirname``` in NodeJS, ```crate``` prefix in Rust, and ```__path__``` attribute in Python. This variable helps developers and the interpreter such as path resolving, detection of execution on top level(program unit) or not(a library)
-
-e.g.
-
-``` jolie
-    // modules/interfaces/AIface.ol
-    export type AMesg : void{ // export as a Module's public identifier
-        name: string
-    }
-    // modules/A.ol
-    import AMesg from interfaces // module importer performs lookup at directory path from meta property
-    import File // module importer performs lookup at build-in modules
-    main{
-        readFile@File( { .filename = meta.dirname + "some.json"} )( jsonResponse )
-      // rest of code is omitted
-    }
-
-```
+**Ref:** https://docs.python.org/2.0/ref/import.html
 
 ### Module's public identifier
 
-In order to achieve the encapsulation of namespace and present feeling of writing Jolie. Introducing an additional identifier to denote accessibility of the client module is necessary. A couple reasons are following
+In order to achieve the encapsulation of namespace or information hinding within module in Jolie. Introducing an additional identifier to denote accessibility of the client module is necessary. A couple reasons are following
 
 1. It helps module's author restricts the modification on part of their modules.
 2. It helps module's user determines accessible parameters on module
