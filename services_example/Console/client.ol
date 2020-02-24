@@ -4,7 +4,7 @@ decl service client( ){
 
 	embed Console ( {
         i = "Console", // this create local binding output port (only valid for param type InputPort) by using default value of ConsoleServiceParam
-        o = {
+        o << {
             location: "local://ConsoleInput"
             interfaces: IReceiver
         } 
